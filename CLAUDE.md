@@ -1,6 +1,6 @@
 # Building with Claude Code
 
-This project was built entirely using [Claude Code](https://claude.com/claude-code), Anthropic's agentic coding tool. This document serves as both guidance for Claude Code when working on this codebase and as a guide for developers who want to build similar applications.
+This project was built using [Claude Code](https://claude.com/claude-code), Anthropic's agentic coding tool. This document serves as both guidance for Claude Code when working on this codebase and as a guide for developers who want to build similar applications.
 
 ## What is iceberg.rest?
 
