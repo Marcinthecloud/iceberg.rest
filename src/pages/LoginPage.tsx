@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Shield, Lock, Eye, FileSearch, Heart, X, Database, FileText, GitBranch, BarChart3, Info } from 'lucide-react'
+import { Shield, Lock, Eye, FileSearch, Heart, X, Database, FileText, GitBranch, BarChart3, Info, Github } from 'lucide-react'
 
 type AuthType = 'bearer' | 'oauth2' | 'sigv4'
 
@@ -387,6 +387,17 @@ export function LoginPage() {
           </p>
         </div>
       </div>
+
+      {/* GitHub Link */}
+      <a
+        href="https://github.com/Marcinthecloud/iceberg.rest"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 p-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-shadow border border-gray-200 hover:border-gray-300"
+        title="View on GitHub"
+      >
+        <Github className="h-6 w-6 text-gray-700" />
+      </a>
 
       {/* Features Modal */}
       {showFeaturesModal && (
