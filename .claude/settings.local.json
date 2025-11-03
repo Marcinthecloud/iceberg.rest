@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:worker:*)",
+      "Bash(npm uninstall:*)",
+      "WebSearch",
+      "Bash(npx wrangler:*)",
+      "Bash(python3:*)",
+      "Bash(SESSION_ID=\"f4d69d1a354c819a6ca44bd905e77272bb504d6ba65c115f01d9a8896f68c129\")",
+      "Bash(bash:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

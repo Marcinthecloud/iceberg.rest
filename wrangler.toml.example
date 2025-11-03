@@ -1,0 +1,33 @@
+name = "iceberg-rest"
+main = "worker/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Assets configuration - Vite build output
+[site]
+bucket = "./dist"
+
+# KV namespace for encrypted token storage
+# Run: npx wrangler kv:namespace create "TOKENS"
+# Then copy the ID here
+[[kv_namespaces]]
+binding = "TOKENS"
+id = "YOUR_KV_NAMESPACE_ID"
+
+# D1 database for session and usage data
+# Run: npx wrangler d1 create iceberg_sessions
+# Then copy the database_id here
+[[d1_databases]]
+binding = "DB"
+database_name = "iceberg_sessions"
+database_id = "YOUR_DATABASE_ID"
+
+#[observability]
+#[observability.logs]
+#enabled = true
+#head_sampling_rate = 0.5
+#invocation_logs = true
+#persist = true
+
+[build]
+command = "npm run build"
