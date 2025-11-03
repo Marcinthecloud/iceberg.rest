@@ -28,3 +28,6 @@ dist-ssr
 .wrangler
 wrangler.toml.local
 wrangler.toml
+
+# Claude Code local settings
+.claude
