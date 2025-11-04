@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { CatalogProvider } from './lib/context/CatalogContext'
+import { MainLayout } from './components/layout/MainLayout'
 
 // Lazy load pages for code splitting
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })))
@@ -25,8 +26,11 @@ function App() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/catalog" element={<CatalogPage />} />
-          <Route path="/table/:namespace/:table" element={<TablePage />} />
+          {/* Nested routes with shared MainLayout (sidebar persists) */}
+          <Route element={<MainLayout />}>
+            <Route path="/catalog" element={<CatalogPage />} />
+            <Route path="/table/:namespace/:table" element={<TablePage />} />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

@@ -14,7 +14,6 @@ import {
   ReactFlowProvider,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { MainLayout } from '@/components/layout/MainLayout'
 import { LoadingScreen } from '@/components/catalog/LoadingScreen'
 import { useCatalog } from '@/lib/context/CatalogContext'
 import { getClient } from '@/lib/iceberg/client'
@@ -407,8 +406,7 @@ function MapPageContent() {
   }
 
   return (
-    <MainLayout>
-      <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col">
         {/* Header */}
         <div className="border-b bg-white p-4">
           <div className="max-w-7xl mx-auto">
@@ -479,8 +477,7 @@ function MapPageContent() {
             />
           </ReactFlow>
         </div>
-      </div>
-    </MainLayout>
+    </div>
   )
 }
 

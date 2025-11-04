@@ -95,6 +95,8 @@ export function ConnectTab({ namespace, table, catalogUrl, warehouse, authType, 
               <img
                 src={engine.logo}
                 alt={engine.name}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-contain"
               />
             </button>

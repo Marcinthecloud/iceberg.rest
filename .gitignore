@@ -31,3 +31,9 @@ wrangler.toml
 
 # Claude Code local settings
 .claude
+
+#Traces
+Trace*
+
+#Tools
+optimize-image*

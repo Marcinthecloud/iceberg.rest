@@ -1,6 +1,6 @@
 import { useState, memo } from 'react'
 import { Clock, CheckCircle, XCircle, X } from 'lucide-react'
-import { useCatalog } from '@/lib/context/CatalogContext'
+import { useApiMonitor } from '@/lib/context/CatalogContext'
 import { cn } from '@/lib/utils/cn'
 
 function getReadableAction(endpoint: string): string {
@@ -18,7 +18,7 @@ function getReadableAction(endpoint: string): string {
 }
 
 const ApiMonitorComponent = () => {
-  const { apiCalls } = useCatalog()
+  const { apiCalls } = useApiMonitor()
   const [isDismissed, setIsDismissed] = useState(false)
 
   if (apiCalls.length === 0 || isDismissed) {
@@ -29,9 +29,8 @@ const ApiMonitorComponent = () => {
   const action = getReadableAction(latestCall.endpoint)
 
   return (
-    <div className="fixed top-4 right-4 z-40 max-w-sm">
+    <div className="fixed top-4 right-4 z-40 max-w-sm" style={{ willChange: 'transform, opacity' }}>
       <div
-        style={{ willChange: 'opacity' }}
         className={cn(
           'bg-white border rounded-lg shadow-lg p-3 text-sm transition-opacity duration-300',
           latestCall.status === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'

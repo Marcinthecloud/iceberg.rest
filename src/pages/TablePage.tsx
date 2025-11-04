@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calendar, Database, FileText, GitBranch, Info, BarChart3, AlertCircle, CheckCircle, Folder, ChevronRight, LogOut, Search, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Calendar, Database, FileText, GitBranch, Info, BarChart3, AlertCircle, CheckCircle, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { ConnectTab } from '@/components/table/ConnectTab'
-import { ApiMonitor } from '@/components/ApiMonitor'
 import { getClient } from '@/lib/iceberg/client'
 import {
   extractTableMetrics,
@@ -27,14 +25,13 @@ import type { LoadTableResult } from '@/types/iceberg'
 export function TablePage() {
   const { namespace, table } = useParams<{ namespace: string; table: string }>()
   const navigate = useNavigate()
-  const { setTableMetric, namespaces, setIsLoaded, addApiCall } = useCatalog()
+  const { setTableMetric, addApiCall } = useCatalog()
   const [tableData, setTableData] = useState<LoadTableResult | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'schema' | 'snapshots' | 'properties' | 'connect'>('overview')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [snapshotSortOrder, setSnapshotSortOrder] = useState<'desc' | 'asc'>('desc')
   const [hoveredBar, setHoveredBar] = useState<{ date: string; count: number; x: number; y: number } | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedSchemaId, setSelectedSchemaId] = useState<number | null>(null)
 
 
@@ -68,36 +65,6 @@ export function TablePage() {
 
   const formatTimestamp = (ms: number): string => {
     return new Date(ms).toLocaleString()
-  }
-
-  const handleLogout = async () => {
-    const sessionId = sessionStorage.getItem('iceberg-session-id')
-
-    try {
-      // Call logout endpoint to delete session
-      if (sessionId) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'X-Session-ID': sessionId,
-          },
-        })
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    } finally {
-      sessionStorage.clear()
-      navigate('/')
-    }
-  }
-
-  const handleRefresh = () => {
-    setIsLoaded(false)
-    navigate('/catalog')
-  }
-
-  const handleNamespaceClick = () => {
-    navigate('/catalog')
   }
 
   // Compare two schemas to detect changes
@@ -178,27 +145,18 @@ export function TablePage() {
     return dailyData
   }
 
-
-  const filteredNamespaces = namespaces.filter((ns) =>
-    ns.displayName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
   if (isLoading) {
     return (
-      <div className="flex h-screen bg-background">
-        <div className="flex items-center justify-center h-full flex-1">
-          <div className="text-muted-foreground">Loading table...</div>
-        </div>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-muted-foreground">Loading table...</div>
       </div>
     )
   }
 
   if (error || !tableData) {
     return (
-      <div className="flex h-screen bg-background">
-        <div className="flex items-center justify-center h-full flex-1">
-          <div className="text-red-600">Error: {error || 'Table not found'}</div>
-        </div>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-red-600">Error: {error || 'Table not found'}</div>
       </div>
     )
   }
@@ -223,98 +181,11 @@ export function TablePage() {
   const schemaChanges = previousSchema && displayedSchema ? compareSchemas(previousSchema, displayedSchema) : null
 
   return (
-    <div className="flex h-screen bg-background">
-      <ApiMonitor />
-      {/* Left Sidebar - Logo, Namespaces Explorer, Logout */}
-      <div className="w-64 border-r bg-white flex flex-col">
-        {/* Logo */}
-        <div className="p-6 border-b">
-          <img
-            src="/logo.png"
-            alt="Iceberg.rest Logo"
-            className="w-3/5 h-auto mx-auto cursor-pointer"
-            onClick={() => navigate('/catalog')}
-          />
-        </div>
-
-        {/* Explorer Header */}
-        <div className="p-4 border-b">
-          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center justify-between">
-            EXPLORER
-            <Button
-              onClick={handleRefresh}
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0"
-            >
-              <RefreshCw className="h-3 w-3" />
-            </Button>
-          </h2>
-          <div className="relative">
-            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-7 h-8 text-sm"
-            />
-          </div>
-        </div>
-
-        {/* Namespaces List */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-2">
-            <div className="text-xs font-semibold text-muted-foreground mb-2 px-2">Namespaces</div>
-            {filteredNamespaces.length === 0 ? (
-              <div className="text-center py-8 text-sm text-muted-foreground">
-                {searchQuery ? 'No namespaces found' : 'No namespaces'}
-              </div>
-            ) : (
-              <div className="space-y-0.5">
-                {filteredNamespaces.map((ns) => {
-                  const isSelected = namespace === ns.displayName
-                  return (
-                    <button
-                      key={ns.displayName}
-                      onClick={handleNamespaceClick}
-                      className={cn(
-                        'w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors',
-                        isSelected
-                          ? 'bg-primary/10 text-primary font-medium'
-                          : 'hover:bg-accent text-foreground'
-                      )}
-                    >
-                      <Folder className={cn('h-4 w-4 flex-shrink-0', isSelected ? 'text-primary' : 'text-muted-foreground')} />
-                      <span className="truncate">{ns.displayName}</span>
-                      <ChevronRight className="h-3 w-3 ml-auto flex-shrink-0 text-muted-foreground" />
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Logout Button */}
-        <div className="p-4 border-t">
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            className="w-full justify-start"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden">
         {/* Header */}
         <div className="border-b bg-white p-4">
           <div className="max-w-7xl mx-auto">
-            <Button variant="ghost" onClick={() => navigate('/catalog')} className="mb-4">
+            <Button variant="ghost" onClick={() => navigate(`/catalog?namespace=${namespace}`)} className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Catalog
             </Button>
@@ -1063,7 +934,6 @@ export function TablePage() {
             )}
           </div>
         </div>
-      </div>
     </div>
   )
 }
