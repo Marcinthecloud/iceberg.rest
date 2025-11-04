@@ -135,11 +135,11 @@ export class IcebergClient {
           )
         }
 
-        // Special handling for 404 - likely means Worker isn't running
+        // Special handling for 404 - catalog endpoint not found
         if (response.status === 404) {
           throw new Error(
-            `Cannot reach proxy server. Make sure you're running 'npm run dev:worker' in a separate terminal. ` +
-            `Original error: ${response.status} ${errorText}`
+            'Catalog endpoint not found (404). Please verify your catalog endpoint URL is correct and that the catalog supports the Apache Iceberg REST specification. ' +
+            'If running locally, also ensure the worker is running.'
           )
         }
 

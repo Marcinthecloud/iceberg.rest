@@ -20,6 +20,10 @@
   <strong>Check it out:</strong> <a href="https://iceberg.rest">iceberg.rest</a>
 </p>
 
+<p align="center">
+  <img src="images/exampleui.png" alt="iceberg.rest UI">
+</p>
+
 ---
 
 ## Features
