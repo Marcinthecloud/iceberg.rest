@@ -894,6 +894,7 @@ export function TablePage() {
                     warehouse={sessionStorage.getItem('iceberg-warehouse') || undefined}
                     authType={(sessionStorage.getItem('iceberg-auth-type') as 'bearer' | 'oauth2' | 'sigv4') || 'bearer'}
                     awsRegion={sessionStorage.getItem('iceberg-aws-region') || undefined}
+                    metadataLocation={tableData?.['metadata-location'] || tableData?.metadata?.location}
                   />
                 </CardContent>
               </Card>

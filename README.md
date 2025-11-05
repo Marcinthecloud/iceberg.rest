@@ -43,11 +43,12 @@
 - **Session Management**: 24-hour TTL of encrypted keys with instant cleanup when you hit "logout"
 
 ### Tested Catalogs
-- Cloudflare R2 Data Catalog
-- Databricks Unity Catalog
-- AWS Glue Data Catalog
-- Snowflake Open Catalog
-- Apache Polaris
+- Cloudflare R2 Data Catalog (Bearer)
+- Databricks Unity Catalog (Bearer)
+- AWS Glue Data Catalog (SigV4)
+- Snowflake Open Catalog (OAuth)
+- Apache Polaris (OAuth)
+- Microsoft OneLake (Bearer)
 
 Should work with...
 - Any Apache Iceberg REST-compliant catalog (if it doesn't, let me know)

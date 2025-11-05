@@ -1,10 +1,71 @@
+// Helper function to detect if this is an Azure/OneLake catalog
+export function isAzureCatalog(catalogUrl: string, metadataLocation?: string): boolean {
+  const urlLower = catalogUrl.toLowerCase()
+  const isAzureUrl = urlLower.includes('microsoft') ||
+                     urlLower.includes('onelake') ||
+                     urlLower.includes('fabric')
+
+  const isAzureStorage = metadataLocation?.toLowerCase().includes('blob.fabric.microsoft.com') ||
+                         metadataLocation?.toLowerCase().includes('dfs.fabric.microsoft.com') ||
+                         metadataLocation?.toLowerCase().includes('.blob.core.windows.net')
+
+  return isAzureUrl || !!isAzureStorage
+}
+
 export function getDuckDBExample(
   fullTable: string,
   catalogUrl: string,
   warehouseValue: string,
   authType: 'bearer' | 'oauth2' | 'sigv4',
-  region: string
+  region: string,
+  metadataLocation?: string
 ): { title: string; code: string; language: string } {
+  // Check if this is an Azure/OneLake catalog
+  if (isAzureCatalog(catalogUrl, metadataLocation)) {
+    return {
+      title: 'DuckDB SQL (Microsoft OneLake)',
+      code: `-- Install required extensions
+INSTALL iceberg;
+LOAD iceberg;
+INSTALL azure;
+LOAD azure;
+INSTALL httpfs;
+LOAD httpfs;
+
+-- Get Azure token (using Python with azure-identity package)
+-- from azure.identity import DefaultAzureCredential
+-- credential = DefaultAzureCredential()
+-- token = credential.get_token("https://storage.azure.com/.default").token
+
+-- Create secrets for OneLake catalog and storage
+CREATE OR REPLACE SECRET onelake_catalog (
+    TYPE ICEBERG,
+    TOKEN '<your_azure_token>'
+);
+
+CREATE OR REPLACE SECRET onelake_storage (
+    TYPE AZURE,
+    PROVIDER ACCESS_TOKEN,
+    ACCESS_TOKEN '<your_azure_token>',
+    ACCOUNT_NAME 'onelake'
+);
+
+-- Attach OneLake catalog
+ATTACH '${warehouseValue}' AS onelake (
+    TYPE ICEBERG,
+    SECRET onelake_catalog,
+    ENDPOINT '${catalogUrl}'
+);
+
+-- Query the table
+SELECT * FROM onelake.${fullTable};
+
+-- Show all available tables
+SHOW ALL TABLES;`,
+      language: 'sql',
+    }
+  }
+
   if (authType === 'sigv4') {
     // AWS Glue example
     return {
@@ -51,10 +112,6 @@ LOAD iceberg;
 INSTALL httpfs;
 LOAD httpfs;
 
--- For Microsoft OneLake, also install and load the Azure extension:
--- INSTALL azure;
--- LOAD azure;
-
 -- Create a DuckDB secret to store catalog credentials.
 CREATE SECRET catalog_secret (
     TYPE ICEBERG,
@@ -81,8 +138,35 @@ export function getTrinoExample(
   catalogUrl: string,
   warehouseValue: string,
   authType: 'bearer' | 'oauth2' | 'sigv4',
-  region: string
+  region: string,
+  metadataLocation?: string
 ): { title: string; code: string; language: string } {
+  // Check if this is an Azure/OneLake catalog
+  if (isAzureCatalog(catalogUrl, metadataLocation)) {
+    return {
+      title: 'Trino Catalog Properties (Microsoft OneLake)',
+      code: `# Create a catalog properties file (e.g., /etc/trino/catalog/iceberg.properties)
+connector.name=iceberg
+
+# Storage Configuration
+fs.native-azure.enabled=true
+azure.auth-type=ACCESS_KEY
+azure.storage-account=<your_storage_account_name>
+azure.access-key=<your_storage_account_access_key>
+
+# Data Catalog Configuration
+iceberg.catalog.type=rest
+iceberg.rest-catalog.uri=${catalogUrl}
+iceberg.rest-catalog.warehouse=${warehouseValue}
+iceberg.rest-catalog.security=OAUTH2
+iceberg.rest-catalog.oauth2.token=<your_azure_token>
+
+# Then query the table:
+# SELECT * FROM iceberg.${fullTable};`,
+      language: 'properties',
+    }
+  }
+
   if (authType === 'sigv4') {
     // AWS S3 Tables example
     return {
@@ -141,8 +225,49 @@ export function getSparkExample(
   catalogUrl: string,
   warehouseValue: string,
   authType: 'bearer' | 'oauth2' | 'sigv4',
-  region: string
+  region: string,
+  metadataLocation?: string
 ): { title: string; code: string; language: string } {
+  // Check if this is an Azure/OneLake catalog
+  if (isAzureCatalog(catalogUrl, metadataLocation)) {
+    return {
+      title: 'PySpark Configuration (Microsoft OneLake)',
+      code: `from pyspark.sql import SparkSession
+from azure.identity import DefaultAzureCredential
+
+# Get Azure credentials
+credential = DefaultAzureCredential()
+token = credential.get_token("https://storage.azure.com/.default").token
+
+# Define catalog connection details
+WAREHOUSE = "${warehouseValue}"
+CATALOG_URI = "${catalogUrl}"
+
+spark = SparkSession.builder \\
+    .appName("OneLakeIcebergExample") \\
+    .config('spark.jars.packages', 'org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.10.0') \\
+    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \\
+    .config("spark.sql.catalog.onelake", "org.apache.iceberg.spark.SparkCatalog") \\
+    .config("spark.sql.catalog.onelake.type", "rest") \\
+    .config("spark.sql.catalog.onelake.uri", CATALOG_URI) \\
+    .config("spark.sql.catalog.onelake.warehouse", WAREHOUSE) \\
+    .config("spark.sql.catalog.onelake.token", token) \\
+    .config("spark.sql.catalog.onelake.io-impl", "org.apache.iceberg.azure.adlsv2.ADLSFileIO") \\
+    .config("spark.sql.catalog.onelake.adls.account-name", "onelake") \\
+    .config("spark.sql.catalog.onelake.adls.account-host", "onelake.blob.fabric.microsoft.com") \\
+    .config("spark.sql.catalog.onelake.adls.auth.shared-key.account.key", token) \\
+    .config("spark.sql.defaultCatalog", "onelake") \\
+    .getOrCreate()
+
+spark.sql("USE onelake")
+
+# Query the table
+df = spark.table("${fullTable}")
+df.show()`,
+      language: 'python',
+    }
+  }
+
   if (authType === 'sigv4') {
     // AWS S3 Tables example
     return {
@@ -215,8 +340,50 @@ export function getPyIcebergExample(
   catalogUrl: string,
   warehouseValue: string,
   authType: 'bearer' | 'oauth2' | 'sigv4',
-  region: string
+  region: string,
+  metadataLocation?: string
 ): { title: string; code: string; language: string } {
+  // Check if this is an Azure/OneLake catalog
+  if (isAzureCatalog(catalogUrl, metadataLocation)) {
+    return {
+      title: 'PyIceberg Python (Microsoft OneLake)',
+      code: `from pyiceberg.catalog import load_catalog
+from azure.identity import DefaultAzureCredential
+
+# Define catalog connection details
+table_api_url = "${catalogUrl}"
+credential = DefaultAzureCredential()
+token = credential.get_token("https://storage.azure.com/.default").token
+
+# Parse warehouse (format: workspace_id/data_item_id)
+warehouse = "${warehouseValue}"
+account_name = "onelake"
+account_host = f"{account_name}.blob.fabric.microsoft.com"
+
+# Connect to OneLake catalog
+catalog = load_catalog("onelake_catalog", **{
+    "uri": table_api_url,
+    "token": token,
+    "warehouse": warehouse,
+    "adls.account-name": account_name,
+    "adls.account-host": account_host,
+    "adls.credential": credential,
+})
+
+# Load the table
+table = catalog.load_table("${fullTable}")
+
+# Scan the table to pandas
+df = table.scan().to_pandas()
+print(df.head())
+
+# Or scan to PyArrow
+arrow_table = table.scan().to_arrow()
+print(arrow_table)`,
+      language: 'python',
+    }
+  }
+
   if (authType === 'sigv4') {
     // AWS Glue Iceberg REST example
     return {
@@ -294,8 +461,51 @@ export function getSnowflakeExample(
   fullTable: string,
   catalogUrl: string,
   warehouseValue: string,
-  authType: 'bearer' | 'oauth2' | 'sigv4'
+  authType: 'bearer' | 'oauth2' | 'sigv4',
+  metadataLocation?: string
 ): { title: string; code: string; language: string } {
+  // Check if this is an Azure/OneLake catalog
+  if (isAzureCatalog(catalogUrl, metadataLocation)) {
+    return {
+      title: 'Snowflake SQL (Microsoft OneLake)',
+      code: `-- Create catalog integration for OneLake
+CREATE OR REPLACE CATALOG INTEGRATION onelake_catalog
+  CATALOG_SOURCE = ICEBERG_REST
+  TABLE_FORMAT = ICEBERG
+  REST_CONFIG = (
+    CATALOG_URI = '${catalogUrl}'
+    CATALOG_NAME = '${warehouseValue}'
+  )
+  REST_AUTHENTICATION = (
+    TYPE = OAUTH
+    OAUTH_TOKEN_URI = 'https://login.microsoftonline.com/<your_tenant_id>/oauth2/v2.0/token'
+    OAUTH_CLIENT_ID = '<your_client_id>'
+    OAUTH_CLIENT_SECRET = '<your_client_secret>'
+    OAUTH_ALLOWED_SCOPES = ('https://storage.azure.com/.default')
+  )
+  ENABLED = TRUE;
+
+-- Create external volume for OneLake storage
+CREATE OR REPLACE EXTERNAL VOLUME onelake_exvol
+  STORAGE_LOCATIONS = ((
+    NAME = 'onelake_exvol'
+    STORAGE_PROVIDER = 'AZURE'
+    STORAGE_BASE_URL = 'azure://onelake.dfs.fabric.microsoft.com/${warehouseValue}'
+    AZURE_TENANT_ID='<your_tenant_id>'
+  ))
+  ALLOW_WRITES = FALSE;
+
+-- Create catalog-linked database
+CREATE OR REPLACE DATABASE onelake_db
+  LINKED_CATALOG = (CATALOG = 'onelake_catalog')
+  EXTERNAL_VOLUME = 'onelake_exvol';
+
+-- Query the table
+SELECT * FROM onelake_db.${fullTable};`,
+      language: 'sql',
+    }
+  }
+
   if (authType === 'oauth2') {
     return {
       title: 'Snowflake SQL (Open Catalog OAuth2)',
