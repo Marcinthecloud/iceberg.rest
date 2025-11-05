@@ -60,15 +60,18 @@ export class IcebergClient {
 
   private buildUrl(path: string): string {
     // If we have a prefix and the path starts with /v1/, inject the prefix
-    // BUT: Don't inject the prefix if it matches the warehouse (e.g., S3 Tables uses ARN as both)
-    if (this.prefix && path.startsWith('/v1/') && this.prefix !== this.warehouse) {
+    if (this.prefix && path.startsWith('/v1/')) {
       path = `/v1/${this.prefix}${path.substring(3)}`
+      console.log('[Iceberg Client] Built URL with prefix:', path)
+      // Don't append warehouse query param when using prefix - it's already in the path
+      return path
     }
 
-    // Add warehouse parameter if provided
+    // Only add warehouse parameter if we don't have a prefix (fallback for catalogs that don't return one)
     if (this.warehouse) {
       const separator = path.includes('?') ? '&' : '?'
       path = `${path}${separator}warehouse=${this.warehouse}`
+      console.log('[Iceberg Client] Built URL with warehouse query param:', path)
     }
 
     return path

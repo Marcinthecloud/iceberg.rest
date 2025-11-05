@@ -17,6 +17,7 @@ interface ConnectTabProps {
   warehouse?: string
   authType: 'bearer' | 'oauth2' | 'sigv4'
   awsRegion?: string
+  metadataLocation?: string
 }
 
 type Engine = 'duckdb' | 'trino' | 'spark' | 'pyiceberg' | 'snowflake'
@@ -36,7 +37,8 @@ function getConnectionCode(
   catalogUrl: string,
   warehouse?: string,
   authType: 'bearer' | 'oauth2' | 'sigv4' = 'bearer',
-  awsRegion?: string
+  awsRegion?: string,
+  metadataLocation?: string
 ): { title: string; code: string; language: string } {
   const fullTable = `${namespace}.${table}`
   const warehouseValue = warehouse || '<warehouse_name>'
@@ -44,19 +46,19 @@ function getConnectionCode(
 
   switch (engine) {
     case 'duckdb':
-      return getDuckDBExample(fullTable, catalogUrl, warehouseValue, authType, region)
+      return getDuckDBExample(fullTable, catalogUrl, warehouseValue, authType, region, metadataLocation)
     case 'trino':
-      return getTrinoExample(fullTable, catalogUrl, warehouseValue, authType, region)
+      return getTrinoExample(fullTable, catalogUrl, warehouseValue, authType, region, metadataLocation)
     case 'spark':
-      return getSparkExample(fullTable, catalogUrl, warehouseValue, authType, region)
+      return getSparkExample(fullTable, catalogUrl, warehouseValue, authType, region, metadataLocation)
     case 'pyiceberg':
-      return getPyIcebergExample(fullTable, catalogUrl, warehouseValue, authType, region)
+      return getPyIcebergExample(fullTable, catalogUrl, warehouseValue, authType, region, metadataLocation)
     case 'snowflake':
-      return getSnowflakeExample(fullTable, catalogUrl, warehouseValue, authType)
+      return getSnowflakeExample(fullTable, catalogUrl, warehouseValue, authType, metadataLocation)
   }
 }
 
-export function ConnectTab({ namespace, table, catalogUrl, warehouse, authType, awsRegion }: ConnectTabProps) {
+export function ConnectTab({ namespace, table, catalogUrl, warehouse, authType, awsRegion, metadataLocation }: ConnectTabProps) {
   const [selectedEngine, setSelectedEngine] = useState<Engine>('duckdb')
   const [copied, setCopied] = useState(false)
 
@@ -67,7 +69,8 @@ export function ConnectTab({ namespace, table, catalogUrl, warehouse, authType, 
     catalogUrl,
     warehouse,
     authType,
-    awsRegion
+    awsRegion,
+    metadataLocation
   )
 
   const handleCopy = () => {
